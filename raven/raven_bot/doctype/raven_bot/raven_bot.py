@@ -23,14 +23,20 @@ class RavenBot(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from frappe.model.document import Document
 		from frappe.types import DF
-
+		from raven.raven.doctype.bots_installed.bots_installed import BotsInstalled
 		from raven.raven_ai.doctype.raven_ai_bot_files.raven_ai_bot_files import RavenAIBotFiles
 		from raven.raven_ai.doctype.raven_bot_functions.raven_bot_functions import RavenBotFunctions
 
 		allow_bot_to_write_documents: DF.Check
+		allow_dm: DF.Check
+		allow_group_mention: DF.Check
+		bot_color: DF.Color | None
 		bot_functions: DF.Table[RavenBotFunctions]
 		bot_name: DF.Data
+		channel_names: DF.Table[BotsInstalled]
+		command_table: DF.Table[Document]
 		debug_mode: DF.Check
 		description: DF.SmallText | None
 		dynamic_instructions: DF.Check

@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import get_datetime, get_system_timezone
 from pytz import timezone, utc
 
-from raven.ai.ai import handle_ai_thread_message, handle_bot_dm
+from raven.ai.ai import handle_ai_thread_message, handle_bot_dm , handle_non_agentic_bots
 from raven.api.raven_channel import get_peer_user
 from raven.notification import (
 	send_notification_for_message,
@@ -21,7 +21,7 @@ from raven.utils import (
 	get_raven_room,
 	is_channel_member,
 	refresh_thread_reply_count,
-	track_channel_visit,
+	track_channel_visit
 )
 
 
@@ -197,11 +197,14 @@ class RavenMessage(Document):
 			self.publish_unread_count_event(last_message_details)
 
 		if self.message_type == "Text":
-			self.handle_ai_message()
+			# self._handle_bot_dm()
+			self.handle_message_to_bot()
 
 		self.send_push_notification()
 
-	def handle_ai_message(self):
+
+
+	def handle_message_to_bot(self):
 
 		# If the message was sent by a bot, do not call the function
 		if self.is_bot_message:
@@ -209,6 +212,7 @@ class RavenMessage(Document):
 
 		# If AI Integration is not enabled, do not call the function
 		raven_settings = frappe.get_cached_doc("Raven Settings")
+
 		if not raven_settings.enable_ai_integration:
 			return
 
@@ -254,16 +258,24 @@ class RavenMessage(Document):
 		bot = frappe.get_cached_doc("Raven Bot", peer_user_doc.bot)
 
 		if not bot.is_ai_bot:
-			return
+			frappe.enqueue(
+				method=handle_non_agentic_bots,
+				message=self,
+				bot=bot,
+				timeout=600,
+				job_name="handle_non_agentic_bots",
+				at_front=True,
+			)
+		else:
 
-		frappe.enqueue(
-			method=handle_bot_dm,
-			message=self,
-			bot=bot,
-			timeout=600,
-			job_name="handle_bot_dm",
-			at_front=True,
-		)
+			frappe.enqueue(
+				method=handle_bot_dm,
+				message=self,
+				bot=bot,
+				timeout=600,
+				job_name="handle_bot_dm",
+				at_front=True,
+			)
 
 	def set_last_message_timestamp(self):
 
@@ -644,7 +656,7 @@ class RavenMessage(Document):
 			# If this is a new messagge (only applicable for files in on_update), then handle the AI message
 			if self.message_type == "File" or self.message_type == "Image":
 				if self.file:
-					self.handle_ai_message()
+					self.handle_message_to_bot()
 
 	def on_trash(self):
 		# delete all the reactions for the message

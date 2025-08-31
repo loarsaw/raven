@@ -74,6 +74,35 @@ def get_workspace_members(workspace_id: str):
 	return data
 
 
+def get_bot_commands(bot_name):
+    try:
+        doc = frappe.get_doc("Raven Bot", bot_name)
+        command_table = []        
+        if doc.command_table:
+            for row in doc.command_table:
+                command_table.append({
+                    'command': row.command_name,
+                    'description': row.command_description,
+                    'script': row.command_script
+                })
+
+        bot_color = doc.bot_color if hasattr(doc, 'bot_color') else None
+        channel_names = doc.channel_names if hasattr(doc, 'channel_names') else None
+
+        return {
+            'command_table': command_table,
+            'bot_color': bot_color,
+            'channel_names': channel_names
+        }
+    
+    except frappe.DoesNotExistError:
+        print(f"Bot with name '{bot_name}' not found.")
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
+
+
 def delete_workspace_members_cache(workspace_id: str):
 	cache_key = f"raven:workspace_members:{workspace_id}"
 	frappe.cache().delete_value(cache_key)
@@ -133,6 +162,14 @@ def get_channel_members(channel_id: str):
 	data = {member.user_id: member for member in members}
 	frappe.cache().set_value(cache_key, data)
 	return data
+
+def get_bot_command(bot_name:str):
+	commands = frappe.get_doc(
+    "Raven Bot",bot_name
+)
+	return commands
+	
+
 
 
 def delete_channel_members_cache(channel_id: str):

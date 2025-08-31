@@ -14,6 +14,7 @@ import { BiX } from "react-icons/bi"
 import ChatStream from "./ChatStream"
 import Tiptap from "../ChatInput/Tiptap"
 import useFetchChannelMembers, { Member } from "@/hooks/fetchers/useFetchChannelMembers"
+import useFetchChannelCommands, { BotCommand } from "@/hooks/fetchers/useFetchChannelCommands"
 import { useParams } from "react-router-dom"
 import clsx from "clsx"
 import { HStack, Stack } from "@/components/layout/Stack"
@@ -43,7 +44,8 @@ interface ChatBoxBodyProps {
 export const ChatBoxBody = ({ channelData }: ChatBoxBodyProps) => {
 
     const { name: user } = useUserData()
-    const { channelMembers, isLoading } = useFetchChannelMembers(channelData.name)
+    const { channelMembers, isLoading:isChannelMemberLoading } = useFetchChannelMembers(channelData.name)
+    const { channelCommands, isLoading: isChannelCommandLoading } = useFetchChannelCommands(channelData.name)
 
     const { onUserType, stopTyping } = useTyping(channelData.name)
 
@@ -199,7 +201,7 @@ export const ChatBoxBody = ({ channelData }: ChatBoxBodyProps) => {
         const isDM = channelData?.is_direct_message === 1 || channelData?.is_self_message === 1
 
         // If the channel data is loaded and the member profile is loaded, then check for this, else don't show anything.
-        if (!channelMemberProfile && !isDM && channelData && !isLoading) {
+        if (!channelMemberProfile && !isDM && channelData && !isChannelMemberLoading) {
             return {
                 shouldShowJoinBox: true,
                 canUserSendMessage: false
@@ -208,7 +210,7 @@ export const ChatBoxBody = ({ channelData }: ChatBoxBodyProps) => {
 
         return { canUserSendMessage: false, shouldShowJoinBox: false }
 
-    }, [channelMemberProfile, channelData, isLoading])
+    }, [channelMemberProfile, channelData, isChannelMemberLoading])
 
 
     const { threadID } = useParams()
@@ -244,6 +246,7 @@ export const ChatBoxBody = ({ channelData }: ChatBoxBodyProps) => {
                             onUpArrow={onUpArrowPressed}
                             clearReplyMessage={clearSelectedMessage}
                             channelMembers={channelMembers}
+                            channelCommands={channelCommands}
                             onUserType={onUserType}
                             // placeholder={randomPlaceholder}
                             replyMessage={selectedMessage}

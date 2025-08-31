@@ -13,6 +13,13 @@ from raven.ai.openai_client import (
 )
 
 
+
+def handle_non_agentic_bots(message , bot):
+	return ""
+    
+
+
+# Handling AI 
 def handle_bot_dm(message, bot):
 	"""
 	Function to handle direct messages to the bot.
