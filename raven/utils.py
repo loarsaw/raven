@@ -394,6 +394,60 @@ def get_map(doctype_name):
 
 
 
+def dependent_channel_serializer(channel_list:list[str], status:bool, response:str, bot:str):
+    """
+    List of the channels where the bot has been subrcribed to
+    Not the client ones but the ones that that have been mentioned 
+    in the bot commands
+    Arguments:
+        channel_list (list[str]): List of dependent channel names.
+        status (bool): Indicates success (True) or failure (False).
+        response (str): Message content to be dispatched.
+        bot (str): Name or ID of the bot that owns the message.
+    """
+    if not bot:
+         frappe.throw("I need the name of bot, bot")
+    if not channel_list:
+         frappe.logger().info(f"Tell the ops guy to feed the dependents channel")
+
+    if status:
+        for channel_name in channel_list:
+            message_dispatch(channel_name=channel_name, bot=bot , response=response)
+    else:
+        last_channel = channel_list[-1]
+        message_dispatch(channel_name=last_channel , bot=bot , response=response)
+    
+          
+          
+
+      
+
+def message_dispatch(channel_name, bot , response):
+    """
+    Get the dependant Channels List and dispatch to them
+    The messages Stored in the Success Table based of 
+    the result that we have recieved.
+
+    Args:
+        channel_name (str): Channel where the messge has to be dispatched
+    """
+    bot_user = frappe.get_cached_value("Raven Bot", bot , "bot_user")
+    frappe.get_doc({
+          "doctype":"Raven Message",
+          "channel_id":channel_name,
+          "text":response,
+          "content":response,
+          "message_type":"Text",
+          "is_bot_message":1,
+          "bot":bot,
+          "owner":bot_user
+
+
+    }).insert(ignore_permissions=True)
+
+    frappe.db.commit()
+
+
 def data_builder(doctype_name, overrides=None):
     """
     Get the default structure of a DocType (including child tables),
@@ -451,3 +505,8 @@ def get_overrides_for_command(doctype, command_context, message):
 
     else:
         return {}
+
+
+def get_username_by_email(email):
+    user = frappe.get_value("Raven User", {"user": email}, "full_name")
+    return user

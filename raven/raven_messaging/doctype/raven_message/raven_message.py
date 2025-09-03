@@ -8,8 +8,7 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_datetime, get_system_timezone
-
-from raven.utils import data_builder
+from raven.utils import data_builder , dependent_channel_serializer
 from pytz import timezone, utc
 
 from raven.ai.ai import handle_ai_thread_message, handle_bot_dm
@@ -25,7 +24,8 @@ from raven.utils import (
 	is_channel_member,
 	refresh_thread_reply_count,
 	track_channel_visit,
-	get_overrides_for_command
+	get_overrides_for_command,
+	get_username_by_email
 )
 
 
@@ -201,7 +201,6 @@ class RavenMessage(Document):
 			self.publish_unread_count_event(last_message_details)
 
 		if self.message_type == "Text":
-			# self._handle_bot_dm()
 			self.handle_message_to_bot()
 
 		self.send_push_notification()
@@ -209,7 +208,6 @@ class RavenMessage(Document):
 	
 
 	def handle_message_to_bot(self):
-
 		# If the message was sent by a bot, do not call the function
 		if self.is_bot_message:
 			return
@@ -225,7 +223,6 @@ class RavenMessage(Document):
 		channel_doc = frappe.get_cached_doc("Raven Channel", self.channel_id)
 		# Thead logic
 		is_ai_thread = channel_doc.is_ai_thread
-		# print(is_ai_thread , "is AI Thread")
 
 		if is_ai_thread:
 			frappe.enqueue(
@@ -263,17 +260,20 @@ class RavenMessage(Document):
 		bot = frappe.get_cached_doc("Raven Bot", peer_user_doc.bot)
 		if not bot.is_ai_bot:
 			command_tree = handle_non_agentic_bots(message=self , bot=bot)
-			bot = frappe.get_doc("Raven Bot" , bot.name)
-			for command in bot.command_table:
+			r_bot = frappe.get_doc("Raven Bot" , bot.name)
+			dependent_channels = [channel.channel_name for channel in bot.get("dependent_channels", [])]
+			dependent_channels.append(self.channel_id)
+
+			for command in r_bot.command_table:
 				if command.command_name == f"/{command_tree['command']}":
 					if command.command_name == "work_plan":
 						self.type = "Plan"
 					else:
 						self.type = "Update"
 
-					overrides = get_overrides_for_command("Daily Work Updates", command_tree, self)
+					overrides = get_overrides_for_command(command.target_doctype, command_tree, self)
 
-					data = data_builder("Daily Work Updates" , overrides=overrides)
+					data = data_builder(command.target_doctype , overrides=overrides)
 					script = command.command_script
 
 					exec_response_value = execute_bot_script(script , 
@@ -285,22 +285,23 @@ class RavenMessage(Document):
 							, "date": __import__('datetime').date},
 												  
 												  
-												  entrypoint="create_doc"
+							entrypoint="create_doc"
 
-											  )
-					print(exec_response_value , "execution value")
+					)
+					response = None
+					message_status = exec_response_value["success"]
+					if message_status:
+						user = f"@{get_username_by_email(self.owner)}"
+						response = command.success_message.format(user=user , user_email=self.owner)
 
-			# print(doc.command_table)
+						
+					else:
+						response = "Error Occurred" 
 
-			# print( bot.as_dict())
-			# frappe.enqueue(
-			# 	method=handle_bot_dm,
-			# 	message=self,
-			# 	bot=bot,
-			# 	timeout=600,
-			# 	job_name="handle_bot_dm",
-			# 	at_front=True,
-			# )
+					
+					dependent_channel_serializer(channel_list=dependent_channels,bot=bot.name, status=message_status , response=response)
+
+		
 		else:
 			frappe.enqueue(
 				method=handle_bot_dm,

@@ -47,6 +47,8 @@
   "allow_dm",
   "command_panel_section",
   "command_table",
+  "additional_dependent_channels_section",
+  "dependent_channels",
   "client_channels_section",
   "channel_names"
  ],
@@ -301,13 +303,23 @@
    "fieldname": "allow_dm",
    "fieldtype": "Check",
    "label": "Allow DM"
+  },
+  {
+   "fieldname": "additional_dependent_channels_section",
+   "fieldtype": "Section Break",
+   "label": "Additional Dependent Channels"
+  },
+  {
+   "fieldname": "dependent_channels",
+   "fieldtype": "Table",
+   "options": "Raven Channel Updates"
   }
  ],
  "grid_page_length": 50,
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-31 15:16:28.718046",
+ "modified": "2025-09-03 14:19:09.282393",
  "modified_by": "Administrator",
  "module": "Raven Bot",
  "name": "Raven Bot",

@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class BotCommandsTable(Document):
+class RavenChannelUpdates(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -14,17 +14,11 @@ class BotCommandsTable(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		approved: DF.Check
-		approved_by: DF.Link | None
-		command_description: DF.Data | None
-		command_name: DF.Data
-		command_script: DF.Code
-		disable: DF.Check
-		failure_message: DF.Text | None
+		channel_name: DF.Link
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
-		success_message: DF.Text | None
+		response: DF.Data
 	# end: auto-generated types
 
 	pass
