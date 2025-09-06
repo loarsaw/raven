@@ -145,13 +145,7 @@ const Tiptap = forwardRef(({ isEdit, slotBefore, fileProps, onMessageSend, onUpA
         channelCommandsRef.current = channelCommands || {};
     }, [channelCommands]);
 
-    // useEffect(() => {
-    //     if (channelCommands) { 
-    //         channelCommandsList.current = 
-    //     }
-    // }, [])
-    // console.log(channelMembers, "channel Members")
-    console.log(channelCommands, 'channel Commands')
+   
 
     useEffect(() => {
         if (channelMembers) {
