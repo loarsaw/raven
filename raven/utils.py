@@ -407,7 +407,6 @@ def get_map(doctype_name):
 
 
 def dependent_channel_serializer(channel_list:list[str], status:bool, response:str, bot:str):
-    print(channel_list , "channel list" , status , response , bot)
     """
     List of the channels where the bot has been subrcribed to
     Not the client ones but the ones that that have been mentioned 
@@ -445,8 +444,8 @@ def message_dispatch(channel_name, bot , response):
         channel_name (str): Channel where the messge has to be dispatched
     """
     bot_user = frappe.get_cached_value("Raven Bot", bot , "bot_user")
-    
-    frappe.get_doc({
+    print(bot_user , bot , "hello" , channel_name , "channel_name")
+    value = frappe.get_doc({
           "doctype":"Raven Message",
           "channel_id":channel_name,
           "text":response,
@@ -459,7 +458,8 @@ def message_dispatch(channel_name, bot , response):
 
     }).insert(ignore_permissions=True)
 
-    frappe.db.commit()
+    commited =  frappe.db.commit()
+    print("Hello" , value , commited)
 
 
 def data_builder(doctype_name, overrides=None):

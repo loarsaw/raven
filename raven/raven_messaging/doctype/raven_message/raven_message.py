@@ -275,7 +275,6 @@ class RavenMessage(Document):
 
 					data = data_builder("Daily Work Updates" , overrides=overrides)
 					script = command.command_script
-					print(script , "script here")
 
 					exec_response_value = execute_bot_script(script , 
 											      variables={"frappe": frappe, 
